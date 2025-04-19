@@ -143,7 +143,7 @@ async create(createGroupDto: CreateGroupDto, creatorId: string): Promise<Group> 
       await group.save();
     }
 
-    // In a real app, you could email this code to the user
+    // In a real i could email this code to the user using nodemailer.
     return {
       message: `Invite code sent to ${email}`,
       inviteCode: group.inviteCode,
@@ -158,9 +158,18 @@ async create(createGroupDto: CreateGroupDto, creatorId: string): Promise<Group> 
       throw new ForbiddenException('Only the group admin can delete the group');
     }
   
+    // Step 1: Reset groupId for all members
+    await this.userModel.updateMany(
+      { _id: { $in: group.members } },
+      { $set: { groupId: null } }
+    );
+  
+    // Step 2: Delete the group
     await this.groupModel.findByIdAndDelete(groupId);
-    return { message: 'Group deleted successfully' };
+  
+    return { message: 'Group deleted successfully and members unlinked from group' };
   }
+  
   
   
   
